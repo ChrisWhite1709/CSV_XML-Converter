@@ -3,6 +3,9 @@ Hello!
 **Format of CSV-Source file:**
 ID,NAME,COUNTRY
 
+Delimiter must be ","
+Each e.g. ID oder NAME will be a node in XML
+
 **TargetFormat**
 <dataroot>
 	<Address>
@@ -13,6 +16,7 @@ ID,NAME,COUNTRY
  <dataroot>
 
 Features
+ * Provides a feature to clean up names (e.g. special characters)
  * Code automatically adds ADDRNUMBER
  * Split - Files to a given number
  * Filepicker instead of providing path via command line
