@@ -17,4 +17,6 @@ Features
  * Split - Files to a given number
  * Filepicker instead of providing path via command line
  * If NAME is longer than 40 (SAP limit) -> NAME2 till NAME4 is automatically added
+
  
+RUN via Commandline or create Executable (pyinstaller -F csvconvert.py)
