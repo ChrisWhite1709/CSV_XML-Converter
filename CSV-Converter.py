@@ -9,7 +9,6 @@ from tkinter.filedialog import askopenfilename
 
 import sys, os
 
-Test
 
 #lists
 csv_list_id =[]
@@ -20,6 +19,7 @@ headers = []
 name_logfile = "logfile.txt"
 encoding_csv = "utf-8"
 file_size = 999999999
+name_id = ""
 
 
 
@@ -110,6 +110,7 @@ def filepicker():
 def checkNameLenth(name):
         name_set = ""
         new_names = []
+        local_count = 0
         if len(name) > 40:
             
             #Teilen bei Delimiter " "
@@ -122,6 +123,10 @@ def checkNameLenth(name):
                 if len(name_set) > 40:
                     new_names.append(name_set)
                     name_set = ""
+                    local_count = local_count +1
+                if local_count == 4:
+                    return new_names 
+                    
 
         else:
             new_names = 0  
@@ -154,6 +159,8 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
         count = 1
         count_size = 0
         file_count = 1
+        
+
         #use data & write to xml format
         for row in data_csv:              
             element1 = ET.SubElement(data, 'Address')
@@ -163,7 +170,8 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
             s_elem2.text = str(count)
 
             for header in headers:
-                
+                #used to seperate long names (over 40 characters), they will be split up to NAME1 to NAME4
+
                 if "NAME" in header:
                     count_name = 1
                     names= checkNameLenth(row[header])
@@ -172,7 +180,20 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
                             s_elem1 = ET.SubElement(element1,'NAME'+str(count_name))
                             s_elem1.text = name 
                             count_name = count_name +1
-                        
+                    else:
+                        s_elem1 = ET.SubElement(element1,header)
+                        s_elem1.text = row[header]
+
+                elif name_id in header: 
+                    s_elem1 = ET.SubElement(element1,"BPVSY") 
+                    s_elem1.text = row[header]
+
+                    s_elem1 = ET.SubElement(element1,"BPTYP") 
+                    s_elem1.text = "2"
+
+
+
+
                 else:
                     s_elem1 = ET.SubElement(element1,header) 
                     s_elem1.text = row[header]
@@ -247,6 +268,9 @@ try:
         if resp_splitfiles == "Y":
             print("How many addresses should one file contain?")            
             file_size = input("")
+
+        print("Please state the CSV header containing the ID")        
+        name_id = input("")
 
         #remove csv from input path & add xml to the end
         input_name_csv = filepicker()   
