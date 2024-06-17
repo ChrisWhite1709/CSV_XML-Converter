@@ -34,7 +34,6 @@ name_id = ""
 settings = []
 
 encoding = "utf-8"
-json_name_logfile = "name_logfile"
 json_file_size = "max_xml_file_size"
 json_encoding_csv = "encoding_csv"
 json_encoding_xml =  "encoding_xml"
@@ -45,6 +44,7 @@ json_xml_structure_root = "root"
 json_xml_structure_element1 = "element1"
 json_xml_structure_bp = "business_partner"
 json_xml_structure_id = "external_identifier"
+json_xml_strcutre_bp_type  ="bp_type"
 
 
 def readSettingsJSON():
@@ -189,10 +189,11 @@ def convertcsv_multiple(input_name_csv, input_name_xml,settings):
     #get headers from csv
     with open(input_name_csv, newline='', encoding=settings[json_encoding_csv]) as csvfile:
         r = csv.reader(csvfile, delimiter=settings[json_csv_delimiter])
-        headers = next(r)  
+        headers = next(r)
 
-
-   #get data from csv
+    
+    
+       #get data from csv
     with open(input_name_csv, newline='', encoding=settings[json_encoding_csv]) as csvfile:    
        
         reader = csv.DictReader(csvfile) 
@@ -216,7 +217,8 @@ def convertcsv_multiple(input_name_csv, input_name_xml,settings):
             s_elem2.text = str(count)
 
             for header in headers:
-                
+                #upper case needed
+                name_header = header.upper()
                 #used to seperate long names (over 40 characters), they will be split up to NAME1 to NAME4
                 if "NAME" in header:
                     count_name = 1
@@ -227,21 +229,22 @@ def convertcsv_multiple(input_name_csv, input_name_xml,settings):
                             s_elem1.text = name 
                             count_name = count_name +1
                     else:
-                        s_elem1 = ET.SubElement(element1,header)
+                        s_elem1 = ET.SubElement(element1,name_header)
                         s_elem1.text = row[header]
+                        
 
                 elif name_id in header: 
                     s_elem1 = ET.SubElement(element1,settings["xml_structure"][json_xml_structure_id]) 
                     s_elem1.text = row[header]
 
                     s_elem1 = ET.SubElement(element1,settings["xml_structure"][json_xml_structure_bp]) 
-                    s_elem1.text = "2"
+                    s_elem1.text = settings["xml_structure"][json_xml_strcutre_bp_type]
 
 
 
 
                 else:
-                    s_elem1 = ET.SubElement(element1,header) 
+                    s_elem1 = ET.SubElement(element1,name_header) 
                     s_elem1.text = row[header]
 
             count = count + 1
@@ -280,7 +283,7 @@ def convertcsv_multiple(input_name_csv, input_name_xml,settings):
         
 
     except Exception:
-        with open (settings[json_name_logfile], "w") as g:
+        with open (name_logfile, "w") as g:
             g.write(traceback.format_exc())
             print (traceback.format_exc())
             restart()  

@@ -1,6 +1,5 @@
 [
-    {
-        "name_logfile": "logfile.txt",
+    {       
         "max_xml_file_size": 999999999,
         "encoding_csv": "utf-8",
         "encoding_xml": "utf-8",
@@ -11,7 +10,8 @@
             "root": "dataroot",
             "element1": "Address",
             "business_partner" : "BPTYP",
-            "external_identifier": "BPVSY"
+            "external_identifier": "BPVSY",
+            "bp_type" : "2"
 
         }
         
