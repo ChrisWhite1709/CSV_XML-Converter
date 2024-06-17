@@ -1,5 +1,5 @@
 import csv
-import os
+import os, sys
 import xml.etree.ElementTree as ET
 import traceback
 from datetime import datetime
@@ -8,7 +8,18 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 import sys, os
+import json
 
+if getattr(sys, 'frozen', False):
+    # If the application is run as a bundle, the PyInstaller bootloader
+    # extends the sys module by a flag frozen=True and sets the app 
+    # path into variable _MEIPASS'.
+    dirname = os.path.dirname(sys.executable)
+else:
+    dirname = os.path.dirname(os.path.abspath(__file__))
+
+
+settings_filename = os.path.join(dirname, 'settings.json')
 
 #lists
 csv_list_id =[]
@@ -17,19 +28,42 @@ csv_list_name_new = ""
 data_csv = []
 headers = []
 name_logfile = "logfile.txt"
-encoding_csv = "utf-8"
+#encoding_csv = "utf-8"
 file_size = 999999999
 name_id = ""
+settings = []
 
+encoding = "utf-8"
+json_name_logfile = "name_logfile"
+json_file_size = "max_xml_file_size"
+json_encoding_csv = "encoding_csv"
+json_encoding_xml =  "encoding_xml"
+json_csv_delimiter = "csv_delimiter"
+json_name_max_length = "name_max_length"
+json_name_new_csv_file = "name_new_csv_file"
+json_xml_structure_root = "root"
+json_xml_structure_element1 = "element1"
+json_xml_structure_bp = "business_partner"
+json_xml_structure_id = "external_identifier"
+
+
+def readSettingsJSON():
+
+    with open(settings_filename, encoding=encoding) as f:
+        data = json.load(f)
+        data = data[0]       
+
+        return data
 
 
 ##restart for further file input
 def restart():   
     os.execv(sys.executable, ['python'] + sys.argv)
 
-def cleanExport(input_name_csv):
+def cleanExport(input_name_csv, settings):
     new_data = []
-    with open(input_name_csv, newline='', encoding=encoding_csv) as csvfile:
+    
+    with open(input_name_csv, newline='', encoding=settings[json_encoding_csv]) as csvfile:
         
         for line in csvfile:
                 new_str = []
@@ -48,10 +82,10 @@ def cleanExport(input_name_csv):
         
 
         input_name_csv = input_name_csv.split(".csv")
-        csv_list_name_new = input_name_csv[0] + "_NEW.csv"
+        csv_list_name_new = input_name_csv[0] + settings[json_name_new_csv_file]
 
-        with open(csv_list_name_new,"w", encoding="utf-8", newline ="") as csvfile:
-            csv_writer = csv.writer(csvfile, delimiter=",")
+        with open(csv_list_name_new,"w", encoding=settings[json_encoding_csv], newline ="") as csvfile:
+            csv_writer = csv.writer(csvfile, delimiter=settings[json_csv_delimiter])
 
             for x in new_data:
                 csv_writer.writerow(x)
@@ -60,13 +94,13 @@ def cleanExport(input_name_csv):
         print("Your file is called:" + csv_list_name_new)
             
             
-def cleanCSV(input_name_csv):
+def cleanCSV(input_name_csv,settings):
     start = ""
     end = ""
     new_str = ""
     write_string = ""
 
-    with open(input_name_csv, newline='', encoding=encoding_csv) as csvfile:
+    with open(input_name_csv, newline='', encoding=settings[json_encoding_csv]) as csvfile:
         for line in csvfile: 
             
             if len(line)<2:
@@ -147,19 +181,19 @@ def checkNameLenth(name):
 
 #this function will look for all values in csv & convert them to xml
 #function to convert xml -> input is path to csv & xml
-def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
+def convertcsv_multiple(input_name_csv, input_name_xml,settings):
     count = 0    
-    data = ET.Element('dataroot')
+    data = ET.Element(settings["xml_structure"][json_xml_structure_root])
     
    
     #get headers from csv
-    with open(input_name_csv, newline='', encoding=encoding_csv) as csvfile:
-        r = csv.reader(csvfile, delimiter=',')
+    with open(input_name_csv, newline='', encoding=settings[json_encoding_csv]) as csvfile:
+        r = csv.reader(csvfile, delimiter=settings[json_csv_delimiter])
         headers = next(r)  
 
 
    #get data from csv
-    with open(input_name_csv, newline='', encoding=encoding_csv) as csvfile:    
+    with open(input_name_csv, newline='', encoding=settings[json_encoding_csv]) as csvfile:    
        
         reader = csv.DictReader(csvfile) 
         for row in reader:    
@@ -175,15 +209,15 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
 
         #use data & write to xml format
         for row in data_csv:              
-            element1 = ET.SubElement(data, 'Address')
+            element1 = ET.SubElement(data, settings["xml_structure"][json_xml_structure_element1])
             
             #automatic ADDRNUMBER assignment
             s_elem2 = ET.SubElement(element1,"ADDRNUMBER")
             s_elem2.text = str(count)
 
             for header in headers:
+                
                 #used to seperate long names (over 40 characters), they will be split up to NAME1 to NAME4
-
                 if "NAME" in header:
                     count_name = 1
                     names= checkNameLenth(row[header])
@@ -197,10 +231,10 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
                         s_elem1.text = row[header]
 
                 elif name_id in header: 
-                    s_elem1 = ET.SubElement(element1,"BPVSY") 
+                    s_elem1 = ET.SubElement(element1,settings["xml_structure"][json_xml_structure_id]) 
                     s_elem1.text = row[header]
 
-                    s_elem1 = ET.SubElement(element1,"BPTYP") 
+                    s_elem1 = ET.SubElement(element1,settings["xml_structure"][json_xml_structure_bp]) 
                     s_elem1.text = "2"
 
 
@@ -214,8 +248,8 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
             count_size = count_size + 1            
             
             #if entered file size is reached -> write to xml file
-            if(count_size == int(filesize)):
-                b_xml = ET.tostring(data, encoding_csv) 
+            if(count_size == int(settings[json_file_size])):
+                b_xml = ET.tostring(data, settings[json_encoding_xml]) 
                
                 #input_name_xml = input_name_xml.split(".xml")                
                 new_xml_name = input_name_xml
@@ -237,7 +271,7 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
         new_xml_name = input_name_xml
         new_xml_name = new_xml_name + str(file_count) + ".xml"
 
-        b_xml = ET.tostring(data, encoding_csv)     
+        b_xml = ET.tostring(data, settings[json_encoding_csv])     
 
         with open(new_xml_name, "wb") as f:          
             f.write(b_xml)
@@ -246,7 +280,7 @@ def convertcsv_multiple(input_name_csv, input_name_xml,filesize):
         
 
     except Exception:
-        with open (name_logfile, "w") as g:
+        with open (settings[json_name_logfile], "w") as g:
             g.write(traceback.format_exc())
             print (traceback.format_exc())
             restart()  
@@ -259,6 +293,9 @@ try:
     #start_dialog
     print("Hello! This tool is to convert CSV files to XML files!")
     
+  
+    settings = readSettingsJSON()
+   
 
     #ask for function
     print("")
@@ -271,9 +308,9 @@ try:
     match response:
 
         case "1":  
-            cleanCSV(filepicker())
+            cleanCSV(filepicker(),settings)
         case "2":        
-            cleanExport(filepicker())
+            cleanExport(filepicker(),settings)
         case "3":
             print("Make sure that the HEADERS are correct -> They will be transfered to e.g. <HEADER1>")
             print("Please provide path to csv. XML will automatically updated or created with the CSVNAME.xml")
@@ -294,7 +331,7 @@ try:
             input_name_xml = input_name_xml[0]
 
             #start reading function 
-            convertcsv_multiple(input_name_csv, input_name_xml,file_size)
+            convertcsv_multiple(input_name_csv, input_name_xml,settings)
    
     
     #ask for further input
