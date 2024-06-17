@@ -27,33 +27,39 @@ name_id = ""
 def restart():   
     os.execv(sys.executable, ['python'] + sys.argv)
 
-# #not in use
-# #function to convert xml -> input is path to csv & xml
-# def convertcsv(input_name_csv, input_name_xml):
-#     count = 0    
-#     data = ET.Element('dataroot')
-   
-#     with open(input_name_csv, newline='', encoding="utf8") as csvfile:
+def cleanExport(input_name_csv):
+    new_data = []
+    with open(input_name_csv, newline='', encoding=encoding_csv) as csvfile:
         
-#         reader = csv.DictReader(csvfile)
-#         for row in reader:
-#             csv_list_id.append(row["ID"])
-#             csv_list_name.append(row["NAME"])
-        
-#     for row in csv_list_id:       
-#         element1 = ET.SubElement(data, 'Address')
-#         s_elem1 = ET.SubElement(element1, 'ADDRNUMBER')
-#         s_elem2 = ET.SubElement(element1, 'NAME1') 
-#         s_elem1.text = csv_list_id[count]
-#         s_elem2.text = csv_list_name[count]
-#         count = count + 1
+        for line in csvfile:
+                new_str = []
+                count = 1
+                items = line.split('""')               
+               
+                for x in items:
+                
+                    new_str.append(cleanString(items[count]))                    
+                    count +=2
+                    
+                    if count >= len(items): 
+                        
+                        new_data.append(new_str)
+                        break
         
 
-#     b_xml = ET.tostring(data)
+        input_name_csv = input_name_csv.split(".csv")
+        csv_list_name_new = input_name_csv[0] + "_NEW.csv"
 
-#     with open(input_name_xml, "wb") as f: 
-#         f.write(b_xml)
+        with open(csv_list_name_new,"w", encoding="utf-8", newline ="") as csvfile:
+            csv_writer = csv.writer(csvfile, delimiter=",")
 
+            for x in new_data:
+                csv_writer.writerow(x)
+            
+        print("Successful")
+        print("Your file is called:" + csv_list_name_new)
+            
+            
 def cleanCSV(input_name_csv):
     start = ""
     end = ""
@@ -97,9 +103,15 @@ def cleanCSV(input_name_csv):
         print("Your file is called:" + csv_list_name_new)
                 
          
-def cleanString(input):
-    input = re.sub('[^A-Za-z0-9 ,.-_\']+',"",input)
-    return input
+def cleanString(input_text):    
+    
+    #text = re.sub('[^A-Za-z0-9 ,.-_\']+"',"",str(input_text))
+    text = re.sub('\W'," ",str(input_text))
+    if "  " in text:
+        text = text.replace("  ", " ")
+        return text
+    else:
+        return text
 
 def filepicker():
 #windows file pick dialog
@@ -250,35 +262,39 @@ try:
 
     #ask for function
     print("")
-    print("Press Press [1] for CleanUp (remove false characters from NAME1)")
-    print("Press Press [2] for CSV-XML Conversion")
+    print("Press Press [1] for CleanUp [OLD] (remove false characters from NAME1)")
+    print('Press Press [2] for CleanUp (SalesForce Export, Seperated with "" ')
+    print("Press Press [3] for CSV-XML Conversion")
     print("")
     response =  input("")
 
-    if response == "1":
-        cleanCSV(filepicker())
+    match response:
 
-    if response == "2":
-        print("Make sure that the HEADERS are correct -> They will be transfered to e.g. <HEADER1>")
-        print("Please provide path to csv. XML will automatically updated or created with the CSVNAME.xml")
+        case "1":  
+            cleanCSV(filepicker())
+        case "2":        
+            cleanExport(filepicker())
+        case "3":
+            print("Make sure that the HEADERS are correct -> They will be transfered to e.g. <HEADER1>")
+            print("Please provide path to csv. XML will automatically updated or created with the CSVNAME.xml")
 
-        print("Do you want to split the XML files? Press Y or N")
-        
-        resp_splitfiles = input("")
-        if resp_splitfiles == "Y":
-            print("How many addresses should one file contain?")            
-            file_size = input("")
+            print("Do you want to split the XML files? Press Y or N")
+            
+            resp_splitfiles = input("")
+            if resp_splitfiles == "Y":
+                print("How many addresses should one file contain?")            
+                file_size = input("")
 
-        print("Please state the CSV header containing the ID")        
-        name_id = input("")
+            print("Please state the CSV header containing the ID")        
+            name_id = input("")
 
-        #remove csv from input path & add xml to the end
-        input_name_csv = filepicker()   
-        input_name_xml = input_name_csv.split(".csv")
-        input_name_xml = input_name_xml[0]
+            #remove csv from input path & add xml to the end
+            input_name_csv = filepicker()   
+            input_name_xml = input_name_csv.split(".csv")
+            input_name_xml = input_name_xml[0]
 
-        #start reading function 
-        convertcsv_multiple(input_name_csv, input_name_xml,file_size)
+            #start reading function 
+            convertcsv_multiple(input_name_csv, input_name_xml,file_size)
    
     
     #ask for further input
