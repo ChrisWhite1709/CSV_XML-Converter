@@ -164,15 +164,19 @@ def checkNameLenth(name):
                 
             #Einzelne Teile durchgehen
             for elements in name:
-                name_set = name_set + " " + elements
-
-                if len(name_set) > 40:
+                #name_set = name_set + " " + elements
+                if len(name_set + elements) < 40:
+                    name_set = name_set + " " + elements
+                if len(name_set + elements) >= 40:
+                    name_set = name_set + " " + elements
                     new_names.append(name_set)
                     name_set = ""
                     local_count = local_count +1
                 if local_count == 4:
                     return new_names 
-                    
+                
+            new_names.append(name_set)   
+
 
         else:
             new_names = 0  
@@ -322,8 +326,8 @@ try:
             
             resp_splitfiles = input("")
             if resp_splitfiles == "Y":
-                print("How many addresses should one file contain?")            
-                file_size = input("")
+                print("The amount of business partners in one file is defined in the settings.json")            
+                
 
             print("Please state the CSV header containing the ID")        
             name_id = input("")
